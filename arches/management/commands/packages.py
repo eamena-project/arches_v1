@@ -270,6 +270,7 @@ class Command(BaseCommand):
 
         edit_group = Group.objects.create(name='edit')
         read_group = Group.objects.create(name='read')
+        Group.objects.create(name='editplus')
 
     def create_users(self):
         """
@@ -286,6 +287,9 @@ class Command(BaseCommand):
         admin_user = User.objects.get(username='admin')
         admin_user.groups.add(edit_group)
         admin_user.groups.add(read_group)
+
+        editplus_group = Group.objects.get(name='editplus')
+        admin_user.groups.add(editplus_group)
 
     def build_permissions(self):
         """
