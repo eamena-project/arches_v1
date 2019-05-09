@@ -5,7 +5,7 @@ Pillow==2.4.0
 rdflib
 unicodecsv
 pyyaml
-pyshp
+pyshp==1.2.12
 pycryptodome
 
 # Leave the following line commented so that pip install will ignore this
