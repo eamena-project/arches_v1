@@ -362,23 +362,23 @@ class ShpWriter(Writer):
         }
 
     def convert_geom(self, geos_geom):
-      if geos_geom.geom_type == 'Point':
+        if geos_geom.geom_type == 'Point':
           multi_geom = MultiPoint(geos_geom)
-          shp_geom = [[c for c in multi_geom.coords]]
-      if geos_geom.geom_type == 'LineString':
+          shp_geom = [c for c in multi_geom.coords]
+        if geos_geom.geom_type == 'LineString':
           multi_geom = MultiLineString(geos_geom)
           shp_geom = [c for c in multi_geom.coords]
-      if geos_geom.geom_type == 'Polygon':
+        if geos_geom.geom_type == 'Polygon':
           multi_geom = MultiPolygon(geos_geom)
           shp_geom = [c[0] for c in multi_geom.coords]
-      if geos_geom.geom_type == 'MultiPoint':
-          shp_geom = [[c for c in geos_geom.coords]]
-      if geos_geom.geom_type == 'MultiLineString':
+        if geos_geom.geom_type == 'MultiPoint':
           shp_geom = [c for c in geos_geom.coords]
-      if geos_geom.geom_type == 'MultiPolygon':
+        if geos_geom.geom_type == 'MultiLineString':
+          shp_geom = [c for c in geos_geom.coords]
+        if geos_geom.geom_type == 'MultiPolygon':
           shp_geom = [c[0] for c in geos_geom.coords]
 
-      return shp_geom
+        return shp_geom
 
     def concatenate_value_lists(self, template_record):
         """
@@ -417,40 +417,37 @@ class ShpWriter(Writer):
         geos_datatypes_to_pyshp_types = {'str':'C', 'datetime':'D', 'float':'F'}
         
         for geom_type, features in features_by_geom_type.iteritems():
-             if len(features) > 0:
-
-                if geom_type == 'point':
-                    writer = shapefile.Writer(shapeType=shapefile.MULTIPOINT)
-                elif geom_type == 'line':
-                    writer = shapefile.Writer(shapeType=shapefile.POLYLINE)
-                elif geom_type == 'poly':
-                    writer = shapefile.Writer(shapeType=shapefile.POLYGON)
+            if len(features) > 0:
+                shp = StringIO()
+                shx = StringIO()
+                dbf = StringIO()
+                prj = StringIO()
+                writer = shapefile.Writer(shp=shp, shx=shx, dbf=dbf)
 
                 for field in resource_export_configs["SCHEMA"]:
                     writer.field(codecs.encode(field['field_name']), geos_datatypes_to_pyshp_types[field['data_type']], field['data_length'])
 
                 for r in features:
+                    print r
                     shp_geom = self.convert_geom(r['geometry'])
-                    if geom_type in ['point','line']:
-                        writer.line(parts=shp_geom)
+                    print(geom_type)
+                    if geom_type == 'point':
+                        writer.multipoint(shp_geom)
+                    elif geom_type == 'line':
+                        writer.line(shp_geom)
                     elif geom_type == 'poly':
-                        writer.poly(parts=shp_geom)
+                        writer.poly(shp_geom)
                     writer.record(**r['properties'])
 
-                shp = StringIO()
-                shx = StringIO()
-                dbf = StringIO()
-                prj = StringIO()
                 prj.write('GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]')
-                writer.saveShp(shp)
-                writer.saveShx(shx)
-                writer.saveDbf(dbf)
+
                 shapefiles_for_export += [
                     {'name':shp_name + geom_type + '.shp', 'outputfile': shp},
                     {'name':shp_name + geom_type + '.dbf', 'outputfile': dbf},
                     {'name':shp_name + geom_type + '.shx', 'outputfile': shx},
                     {'name':shp_name + geom_type + '.prj', 'outputfile': prj}
                     ]
+                writer.close()
         
         return shapefiles_for_export
 
