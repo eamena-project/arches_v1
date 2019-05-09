@@ -656,8 +656,6 @@ class Concept(object):
         cursor.execute(sql)
         rows = cursor.fetchall()
 
-
-
         class Val(object):
             def __init__(self, conceptid):
                 self.text = ''
@@ -697,7 +695,6 @@ class Concept(object):
                             path.pop(0)
                             _findNarrower(child, path, rec)
                 val.children.sort(key=lambda x: (x.sortorder, x.text))
-                
 
         for row in rows: # Looks for concepts which have a label in the target language
             rec = dict(zip(column_names, row))
@@ -708,19 +705,19 @@ class Concept(object):
         for row in rows: # Looks for concepts which have multiple-language labels, including the target language, and builds an index of those rows
             rec = dict(zip(column_names, row))
             if str(rec['languageid']).lower() != language:
+                if rec['vtype'] == 'sortorder':  # Skip sortorder rows
+                    continue
                 for concept in list_of_good_concepts:
                     if rec['conceptpath'][-37:-1] == concept:  #Retrieves the bottom conceptid in the conceptpath
                         list_of_bad_indices.append(rows.index(row))
                         
         removeset = set(list_of_bad_indices)
         newrows = [v for i, v in enumerate(rows) if i not in removeset] # Builds the new set of rows, having purged the rows which contain concept labels in other languages for concepts that have labels in the target language
-        
+
         for row in newrows:
             rec = dict(zip(column_names, row))
             path = rec['conceptpath'][1:-1].split(',')
             _findNarrower(result, path, rec)
-
-
             
         return JSONSerializer().serializeToPython(result)['children']
 
